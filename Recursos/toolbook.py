@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from tabulate import tabulate
-
+import numpy as np
 import sys
 from tabulate import tabulate
 
@@ -148,4 +148,124 @@ def handle_missing_data(dataset):
         else:
             print("Opción no válida. No se realizará ninguna acción para esta columna.")
 
+    return dataset
+
+
+def handle_duplicate_data(dataset):
+    
+    sys.stdout.flush()  # Forzar la salida inmediata de los mensajes
+    duplicated_groups = dataset[dataset.duplicated(keep=False)].groupby(list(dataset.columns)).groups
+
+    if not duplicated_groups:
+        print("No hay valores duplicados en el conjunto de datos.")
+        return dataset
+
+    print("\nAhora, vamos a manejar los valores duplicados")
+
+    # Eliminar duplicados
+    print("\nOpciones para manejar datos duplicados:")
+    print("1. Eliminar duplicados")
+    print("2. Revisar las filas duplicadas")
+    opcion = input("Por favor, seleccione una opción para manejar los datos duplicados (1-2) o presione 'enter' para continuar: ")
+
+    if opcion == "1":
+        datos_previos = dataset.copy()
+        dataset = dataset.drop_duplicates()
+        print("\nSe eliminaron los valores duplicados.")
+        print("\nDatos duplicados eliminados:")
+        print_data(datos_previos[datos_previos.duplicated()], "keys", "")
+        print("\nDatos actualizados (duplicados eliminados):")
+        print_data(dataset, "keys", "")
+    elif opcion == "2":
+        print("Valores duplicados agrupados:")
+        for i, (group, indices) in enumerate(duplicated_groups.items(), start=1):
+            print(f"\nGrupo {i}:")
+            print_data(dataset.loc[indices], "keys", "")
+        sys.stdout.flush()  # Forzar la salida inmediata de los mensajes
+        handle_duplicate_data(dataset)
+    elif opcion == "":
+        pass
+    else:
+        print("Opción no válida. No se realizará ninguna acción.")
+
+    return dataset
+
+def handle_outliers(dataset):
+    """
+    Identifica y maneja los valores atípicos en un conjunto de datos.
+
+    Args:
+    - dataset: DataFrame de pandas, el conjunto de datos a procesar.
+
+    Returns:
+    - DataFrame: El conjunto de datos actualizado después de manejar los valores atípicos.
+    """
+
+    def detect_outliers(data, threshold=3):
+        outliers = []
+        mean = np.mean(data)
+        std = np.std(data)
+        for value in data:
+            z_score = (value - mean) / std
+            if np.abs(z_score) > threshold:
+                outliers.append(value)
+        return outliers
+
+    sys.stdout.flush()  # Forzar la salida inmediata de los mensajes
+
+    for columna in dataset.columns:
+        sys.stdout.flush()  # Forzar la salida inmediata de los mensajes
+        outliers = detect_outliers(dataset[columna])
+        if outliers:
+            print("\n_______________________________________")
+            print(f"Los valores atípicos en la columna '{columna}' son:", outliers)
+            lower_bound = np.min([value for value in dataset[columna] if value not in outliers])
+            upper_bound = np.max([value for value in dataset[columna] if value not in outliers])
+            print(f"Los valores de esta columna deberían estar en este rango: [{lower_bound}, {upper_bound}]")
+            print("_______________________________________")
+
+            print(f"\nOpciones para manejar valores atípicos en la columna '{columna}':")
+            print("1. Imputar la media de la columna")
+            print("2. Imputar la mediana de la columna")
+            print("3. Imputar el valor mínimo de la columna")
+            print("4. Imputar el valor máximo de la columna")
+            print("5. Eliminar filas con valores atípicos en esta columna")
+            print("6. Sustituir los valores atípicos con un valor específico")
+            print("7. Mantener los valores atípicos intactos")
+            sys.stdout.flush()  # Forzar la salida inmediata de los mensajes
+            opcion = input("Por favor, seleccione una opción para esta columna (1-7) o presione 'enter' para continuar: ")
+
+            if opcion == "1":
+                sys.stdout.flush()  # Forzar la salida inmediata de los mensajes
+                dataset[columna] = dataset[columna].fillna(dataset[columna].mean())
+                print("\nSe imputa la media de la columna")
+            elif opcion == "2":
+                sys.stdout.flush()  # Forzar la salida inmediata de los mensajes
+                dataset[columna] = dataset[columna].fillna(dataset[columna].median())
+                print("\nSe imputa la mediana de la columna")
+            elif opcion == "3":
+                sys.stdout.flush()  # Forzar la salida inmediata de los mensajes
+                dataset[columna] = dataset[columna].fillna(lower_bound)
+                print("\nSe imputa el valor mínimo de la columna")
+            elif opcion == "4":
+                sys.stdout.flush()  # Forzar la salida inmediata de los mensajes
+                dataset[columna] = dataset[columna].fillna(upper_bound)
+                print("\nSe imputa el valor máximo de la columna")
+            elif opcion == "5":
+                sys.stdout.flush()  # Forzar la salida inmediata de los mensajes
+                dataset = dataset[~dataset[columna].isin(outliers)]
+                print("\nSe elimina filas con valores atípicos en esta columna")
+            elif opcion == "6":
+                sys.stdout.flush()  # Forzar la salida inmediata de los mensajes
+                valor_especifico = input("Por favor, ingrese el valor específico con el que desea reemplazar los valores atípicos: ")
+                dataset[columna] = dataset[columna].replace(outliers, valor_especifico)
+                print("\nSe sustiye los valores atípicos con un valor específico")
+            elif opcion == "7":
+                sys.stdout.flush()  # Forzar la salida inmediata de los mensajes                
+                print("\nSe mantiene los valores atípicos intactos")
+                continue
+            elif opcion == "":
+                continue
+            else:
+                print("Opción no válida. No se realizará ninguna acción para esta columna.")
     return dataset
