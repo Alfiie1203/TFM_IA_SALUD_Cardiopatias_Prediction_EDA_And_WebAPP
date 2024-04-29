@@ -6,6 +6,10 @@ import numpy as np
 import sys
 from tabulate import tabulate
 import os
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, confusion_matrix
 
 def detailedExploration(dataset):
     """
@@ -350,3 +354,85 @@ def analyze_variable(dataset, target_name):
         print(f"Tabla de resultados para la variable '{variable_name}':")
         print(tabulate(results[variable_name], headers='keys', tablefmt='grid'))
         print()
+
+
+def preprocess_data(df, target_column, test_size=0.20, random_state=0):
+    # Separar el conjunto de características (X) y la variable objetivo (y)
+    X = df.drop([target_column], axis=1)
+    y = df[target_column]
+    
+    # Dividir los datos en conjuntos de entrenamiento y prueba
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=random_state)
+    
+    # Identificar columnas categóricas y numéricas
+    categorical_cols = X.select_dtypes(include=['object']).columns.tolist()
+    numeric_cols = X.select_dtypes(include=['int64', 'float64']).columns.tolist()
+    
+    # Preprocesamiento de columnas categóricas
+    if categorical_cols:
+        # Codificación One-Hot para columnas categóricas
+        preprocessor = ColumnTransformer(
+            transformers=[
+                ('cat', OneHotEncoder(), categorical_cols)
+            ],
+            remainder='passthrough'
+        )
+        X_train = preprocessor.fit_transform(X_train)
+        X_test = preprocessor.transform(X_test)
+    
+    # Escalar los datos numéricos utilizando StandardScaler
+    st_scale = StandardScaler()
+    X_train_scaled = st_scale.fit_transform(X_train)
+    X_test_scaled = st_scale.transform(X_test)
+    
+    return X_train_scaled, X_test_scaled, y_train, y_test
+
+
+def evaluate_classification(y_pred, y_test, tipo):
+    if tipo == "B":
+        # Calculate accuracy
+        accuracy = accuracy_score(y_test, y_pred)
+        print("Accuracy:", accuracy)
+
+        # Calculate precision
+        precision = precision_score(y_test, y_pred)
+        print("Precision:", precision)
+
+        # Calculate recall
+        recall = recall_score(y_test, y_pred)
+        print("Recall:", recall)
+
+        # Calculate F1 score
+        f1 = f1_score(y_test, y_pred)
+        print("F1 Score:", f1)
+
+        # Calculate AUC-ROC
+        auc_roc = roc_auc_score(y_test, y_pred)
+        print("AUC-ROC:", auc_roc)
+    elif tipo == "M":
+        # Calculate accuracy
+        accuracy = accuracy_score(y_test, y_pred)
+        print("Accuracy:", accuracy)
+
+        # Calculate precision
+        precision = precision_score(y_test, y_pred, average='weighted') # o average='macro', 'micro', 'weighted', según lo que necesites
+        print("Precision:", precision)
+
+        # Calculate recall
+        recall = recall_score(y_test, y_pred, average='weighted')
+        print("Recall:", recall)
+
+        # Calculate F1 score
+        f1 = f1_score(y_test, y_pred, average='weighted')
+        print("F1 Score:", f1)
+
+        # Calculate AUC-ROC
+        # AUC-ROC no es aplicable directamente a problemas multiclase, se puede usar para problemas binarios.
+        # Si deseas evaluar la curva ROC para problemas multiclase, necesitarás usar estrategias específicas como One-vs-One o One-vs-All.
+        # Pero aún puedes calcular roc_auc_score, solo que necesitarás calcularlo para cada clase en lugar de para todo el conjunto.
+        
+        # Confusion matrix
+        confusion = confusion_matrix(y_test, y_pred)
+        print("Confusion Matrix:\n", confusion)
+    else:
+        print("Tipo no válido. Debe ser 'B' o 'M'.")
