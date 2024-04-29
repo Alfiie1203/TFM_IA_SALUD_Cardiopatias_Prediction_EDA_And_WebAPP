@@ -5,6 +5,7 @@ from tabulate import tabulate
 import numpy as np
 import sys
 from tabulate import tabulate
+import os
 
 def detailedExploration(dataset):
     """
@@ -269,3 +270,83 @@ def handle_outliers(dataset):
             else:
                 print("Opción no válida. No se realizará ninguna acción para esta columna.")
     return dataset
+
+
+def correlationAnalysis(dataset):
+    """
+    Realiza un análisis de correlación para identificar las relaciones lineales entre las variables.
+
+    Parameters:
+    - dataset: DataFrame de pandas, conjunto de datos a analizar.
+    """
+    # Calcula la matriz de correlación
+    correlation_matrix = dataset.corr()
+
+    # Imprime la matriz de correlación de forma tabulada
+    print("\nMatriz de correlación:")
+    print(tabulate(correlation_matrix, headers='keys', tablefmt='fancy_grid'))
+    
+    # Visualiza la matriz de correlación
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f", linewidths=.5)
+    plt.title('Matriz de Correlación')
+    plt.show()
+
+
+
+def analyze_variable(dataset, target_name):
+    """
+    Analiza cada variable del conjunto de datos en función de la variable objetivo.
+
+    Parameters:
+    - dataset: DataFrame de pandas, conjunto de datos a analizar.
+    - target_name: str, nombre de la variable objetivo.
+
+    Returns:
+    - dict: Diccionario donde las claves son los nombres de las variables y los valores son los resultados del análisis.
+    """
+
+    results = {}
+
+    # Obtener los nombres de todas las columnas excepto la variable objetivo
+    variable_names = [col for col in dataset.columns if col != target_name]
+
+    for variable_name in variable_names:
+        # Eliminar filas con valores NaN en las columnas de interés
+        dataset_cleaned = dataset[[variable_name, target_name]].dropna()
+
+        # Calcular la cantidad total de veces que aparece cada valor único de la variable
+        counts = dataset_cleaned[variable_name].value_counts()
+
+        # Calcular la cantidad total de veces que aparece cada valor único en porcentaje
+        counts_percentage = counts / len(dataset_cleaned) * 100
+
+        # Crear un DataFrame para almacenar los resultados
+        results[variable_name] = pd.DataFrame({variable_name: counts.index, 'Count': counts.values, 'Percentage': counts_percentage.values})
+
+        # Calcular la cantidad total de veces que aparece cada valor único de la variable objetivo
+        target_counts = dataset_cleaned.groupby(variable_name)[target_name].value_counts().unstack().fillna(0)
+
+        # Calcular la cantidad total de veces que aparece cada valor único de la variable objetivo en porcentaje
+        target_counts_percentage = (target_counts.div(target_counts.sum(axis=1), axis=0) * 100).fillna(0)
+
+        # Unir los resultados al DataFrame principal
+        results[variable_name] = results[variable_name].join(target_counts, on=variable_name)
+        results[variable_name] = results[variable_name].join(target_counts_percentage, on=variable_name, rsuffix='_percentage')
+
+        # Renombrar las columnas
+        results[variable_name] = results[variable_name].rename(columns={0: f'{target_name}_0', 1: f'{target_name}_1',
+                                          0.0: f'{target_name}_0_percentage', 1.0: f'{target_name}_1_percentage'})
+
+        # Crear un gráfico de barras para mostrar la cantidad de veces que la variable objetivo es "1" y "0" para cada valor único de la variable
+        target_counts.plot(kind='bar', stacked=True)
+        plt.title(f'Distribución de {target_name} para cada valor único de {variable_name}')
+        plt.xlabel(variable_name)
+        plt.ylabel(f'Cantidad de {target_name}')
+        plt.legend(title=target_name)
+        plt.show()
+
+        # Imprimir la tabla de resultados
+        print(f"Tabla de resultados para la variable '{variable_name}':")
+        print(tabulate(results[variable_name], headers='keys', tablefmt='grid'))
+        print()
