@@ -355,8 +355,32 @@ def analyze_variable(dataset, target_name):
         print(tabulate(results[variable_name], headers='keys', tablefmt='grid'))
         print()
 
+def preprocess_categorical_columns(X_train, X_test, categorical_cols):
+    """
+    Preprocess categorical columns by applying One-Hot Encoding.
+    
+    Parameters:
+        X_train (DataFrame): Training features DataFrame.
+        X_test (DataFrame): Test features DataFrame.
+        categorical_cols (list): List of categorical column names.
+        
+    Returns:
+        X_train_processed (numpy.ndarray): Processed training features.
+        X_test_processed (numpy.ndarray): Processed test features.
+    """
+    # Codificación One-Hot para columnas categóricas
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ('cat', OneHotEncoder(), categorical_cols)
+        ],
+        remainder='passthrough'
+    )
+    X_train_processed = preprocessor.fit_transform(X_train)
+    X_test_processed = preprocessor.transform(X_test)
+    
+    return X_train_processed, X_test_processed
 
-def preprocess_data(df, target_column, test_size=0.20, random_state=0):
+def preprocess_data(df, target_column, test_size, random_state):
     # Separar el conjunto de características (X) y la variable objetivo (y)
     X = df.drop([target_column], axis=1)
     y = df[target_column]
@@ -370,15 +394,7 @@ def preprocess_data(df, target_column, test_size=0.20, random_state=0):
     
     # Preprocesamiento de columnas categóricas
     if categorical_cols:
-        # Codificación One-Hot para columnas categóricas
-        preprocessor = ColumnTransformer(
-            transformers=[
-                ('cat', OneHotEncoder(), categorical_cols)
-            ],
-            remainder='passthrough'
-        )
-        X_train = preprocessor.fit_transform(X_train)
-        X_test = preprocessor.transform(X_test)
+        X_train, X_test = preprocess_categorical_columns(X_train, X_test, categorical_cols)
     
     # Escalar los datos numéricos utilizando StandardScaler
     st_scale = StandardScaler()
