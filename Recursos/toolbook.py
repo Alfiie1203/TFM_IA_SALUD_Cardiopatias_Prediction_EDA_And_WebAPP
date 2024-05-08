@@ -371,7 +371,7 @@ def preprocess_categorical_columns(X_train, X_test, categorical_cols):
     # Codificación One-Hot para columnas categóricas
     preprocessor = ColumnTransformer(
         transformers=[
-            ('cat', OneHotEncoder(), categorical_cols)
+            ('cat', OneHotEncoder(handle_unknown='ignore'), categorical_cols)
         ],
         remainder='passthrough'
     )
