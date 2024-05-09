@@ -1,0 +1,46 @@
+<form (ngSubmit)="onSubmit()">
+  <label for="age">age</label>
+  <input type="text" id="age" name="age" [(ngModel)]="dataset.age">
+  
+  <label for="sex">sex</label>
+  <input type="text" id="sex" name="sex" [(ngModel)]="dataset.sex">
+  
+  <label for="cp">cp</label>
+  <input type="text" id="cp" name="cp" [(ngModel)]="dataset.cp">
+
+  <label for="trestbps">trestbps</label>
+  <input type="text" id="trestbps" name="trestbps" [(ngModel)]="dataset.trestbps">
+
+  <label for="chol">chol</label>
+  <input type="text" id="chol" name="chol" [(ngModel)]="dataset.chol">
+
+  <label for="fbs">fbs</label>
+  <input type="text" id="fbs" name="fbs" [(ngModel)]="dataset.fbs">
+
+  <label for="restecg">restecg</label>
+  <input type="text" id="restecg" name="restecg" [(ngModel)]="dataset.restecg">
+
+  <label for="thalach">thalach</label>
+  <input type="text" id="thalach" name="thalach" [(ngModel)]="dataset.thalach">
+
+  <label for="exang">exang</label>
+  <input type="text" id="exang" name="exang" [(ngModel)]="dataset.exang">
+
+  <label for="oldpeak">oldpeak</label>
+  <input type="text" id="oldpeak" name="oldpeak" [(ngModel)]="dataset.oldpeak">
+
+  <label for="slope">slope</label>
+  <input type="text" id="slope" name="slope" [(ngModel)]="dataset.slope">
+
+  <label for="ca">ca</label>
+  <input type="text" id="ca" name="ca" [(ngModel)]="dataset.ca">
+
+  <label for="thal">thal</label>
+  <input type="text" id="thal" name="thal" [(ngModel)]="dataset.thal">
+  
+  <button type="submit">Calcular</button>
+</form>
+
+<div *ngIf="resultado !== undefined" class="result-container">
+  <p class="result-text">El resultado es: {{ resultado }}</p>
+</div>
